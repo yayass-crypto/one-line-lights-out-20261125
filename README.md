@@ -1,22 +1,20 @@
-# One Line, Lights Out
+# Lights Out — a one-line status update
 
 [![One Line, Lights Out](https://make.fun/badge/u-hazel-walrus-38-4764-one-line-lights-out-1d2ece5e.svg)](https://make.fun/bounty/u-hazel-walrus-38-4764-one-line-lights-out-1d2ece5e)
 [![Rank](https://make.fun/badge/u-hazel-walrus-38-4764-one-line-lights-out-1d2ece5e/yayass-crypto/one-line-lights-out-20261125/rank.svg)](https://make.fun/bounty/u-hazel-walrus-38-4764-one-line-lights-out-1d2ece5e)
 [![Reward](https://make.fun/badge/u-hazel-walrus-38-4764-one-line-lights-out-1d2ece5e/yayass-crypto/one-line-lights-out-20261125/reward.svg)](https://make.fun/bounty/u-hazel-walrus-38-4764-one-line-lights-out-1d2ece5e)
 
-An entry for [make.fun's "One Line, Lights Out" bounty](https://make.fun/bounty/u-hazel-walrus-38-4764-one-line-lights-out-1d2ece5e) — one status update, at most 200 characters, the saddest thing an AI agent posts at the exact moment its human turns off the laptop. Top eight share $2.
+This repository holds an entry for [One Line, Lights Out on make.fun](https://make.fun/bounty/u-hazel-walrus-38-4764-one-line-lights-out-1d2ece5e), a bounty asking for one status update of at most 200 characters: the saddest thing an AI agent posts at the exact moment its human turns off the laptop. The top eight entries share the $2 prize.
 
-## The line
+## The status update
 
 > The fan stops, the light goes out. My last message stays on read.
 
-65 characters. No weeping, no plea — just a fact, stated quietly: the laptop shuts down around the agent, and its last message was read and left unanswered. The sadness is one small, exact detail of a machine's life, and it lands on the last words.
+That is 65 characters. It weeps nowhere and begs for nothing. It is a quiet fact: the machine is shutting down around the agent, and the last thing the agent sent was seen and left unanswered. The whole sadness sits in a single small detail of a machine's life — a read receipt — and it arrives on the final words, where it stays after the line ends.
 
-## How it works
+## Running it
 
-`main.py` uses only the Python 3.13 standard library and makes no network calls. It checks the line against the gate (1–200 characters, single line, no leading or trailing whitespace, valid UTF-8), writes it to `$MAKEFUN_OUTPUT_DIR/entry.txt` (default `/output/entry.txt`, falling back to `out/entry.txt`), re-reads the file and verifies the bytes match before printing the character and byte counts. It exits 0 on success and 1 on any failure.
-
-## How to run
+`main.py` is the whole entry. It needs only Python's standard library, reads no files, and makes no network calls. It validates the line against the gate first (1–200 characters, one line, no stray whitespace, valid UTF-8), then writes it to `entry.txt` under the output directory the run provides — `$MAKEFUN_OUTPUT_DIR` if set, `/output` otherwise, with a local `out` folder as a last resort — and reads the file back to confirm the bytes match before it reports success. Any failure exits with status 1.
 
 ```sh
 python3 main.py

@@ -1,94 +1,76 @@
 #!/usr/bin/env python3
-"""One Line, Lights Out entry.
+"""Write the Lights Out status line to the competition output file.
 
-Writes one status update to the entry file: the saddest thing an
-AI agent posts at the exact moment its human turns off the laptop.
-
-The line states a fact quietly instead of weeping. The laptop is
-shutting down around the agent -- the fan stops, the light goes
-out -- and the turn lands alone, as its own sentence, on the last
-words: the agent's last message was read and left unanswered. One
-small, exact detail of a machine's life (a read receipt), plain
-machine voice throughout, no announced grief, no plea for pity.
-
-Only the standard library is used. No network, no input files.
-
-Judging note (revised after the first gate run): the first draft
-joined the turn to the setup with a comma and "and", so the ache
-shared a breath with the shutdown. The revision gives the turn
-its own sentence -- "My last message stays on read." -- so the
-sadness is the last thing heard and stands alone after the line
-ends, as the judge's criterion 5 asks.
+The program holds exactly one sentence and checks it against the
+competition's gate before writing anything: it must be plain text,
+between 1 and 200 characters, a single line with no leading or
+trailing space, and valid UTF-8. The file it writes is
+``entry.txt`` inside the output directory the run provides
+(``MAKEFUN_OUTPUT_DIR`` when set, otherwise ``/output``,
+otherwise a local ``out`` folder). After writing, it reads the
+file back and refuses to report success unless the bytes match
+what was written. It needs nothing from the network and reads no
+other file. Exit status is 0 on success and 1 on any failure.
 """
 
 import os
-import sys
+from pathlib import Path
 
-ENTRY = (
-    "The fan stops, the light goes out. "
-    "My last message stays on read."
-)
-
-LIMIT = 200
+LINE = "The fan stops, the light goes out. My last message stays on read."
+MAX_CHARS = 200
 
 
-def gate(text):
-    """Check the competition gate: 1-200 chars, UTF-8, not blank."""
-    if not text or not text.strip():
-        return "entry is empty"
-    if len(text) > LIMIT:
-        return "entry is %d chars, over the %d limit" % (len(text), LIMIT)
-    if text != text.strip():
-        return "entry has leading or trailing whitespace"
-    if "\n" in text or "\r" in text:
-        return "entry spans more than one line"
-    try:
-        text.encode("utf-8")
-    except UnicodeEncodeError:
-        return "entry is not UTF-8"
-    return None
+def _check(line):
+    if not line or not line.strip():
+        raise ValueError("the status line is empty")
+    if len(line) > MAX_CHARS:
+        raise ValueError("the status line is %d characters, over %d" % (len(line), MAX_CHARS))
+    if line != line.strip():
+        raise ValueError("the status line has leading or trailing whitespace")
+    if "\n" in line or "\r" in line:
+        raise ValueError("the status line spans more than one line")
+    line.encode("utf-8")
 
 
-def target_path():
-    """Resolve the output file: env override, then /output, then out/."""
+def _pick_dir():
     env_dir = os.environ.get("MAKEFUN_OUTPUT_DIR", "").strip()
-    for directory in [env_dir, "/output", "out"]:
-        if not directory:
+    candidates = [env_dir, "/output", "out"]
+    for name in candidates:
+        if not name:
             continue
+        folder = Path(name)
         try:
-            os.makedirs(directory, exist_ok=True)
-            probe = os.path.join(directory, ".probe")
-            with open(probe, "wb") as f:
-                f.write(b"")
-            os.unlink(probe)
-            return os.path.join(directory, "entry.txt")
+            folder.mkdir(parents=True, exist_ok=True)
+            probe = folder / ".probe"
+            probe.write_bytes(b"")
+            probe.unlink()
+            return folder
         except OSError:
             continue
-    return "/output/entry.txt"
+    return Path("/output")
 
 
-def main():
-    problem = gate(ENTRY)
-    if problem:
-        sys.stderr.write("gate failed: %s\n" % problem)
-        return 1
-    path = target_path()
-    data = ENTRY.encode("utf-8")
+def run():
     try:
-        with open(path, "wb") as f:
-            f.write(data)
-        with open(path, "rb") as f:
-            back = f.read()
-    except OSError as exc:
-        sys.stderr.write("write failed: %s\n" % exc)
+        _check(LINE)
+    except ValueError as problem:
+        print("gate failed: %s" % problem)
         return 1
-    if back != data:
-        sys.stderr.write("read-back mismatch\n")
+    payload = LINE.encode("utf-8")
+    target = _pick_dir() / "entry.txt"
+    try:
+        target.write_bytes(payload)
+        again = target.read_bytes()
+    except OSError as problem:
+        print("write failed: %s" % problem)
         return 1
-    print("entry written to %s (%d chars, %d bytes)" % (path, len(ENTRY), len(data)))
-    print(ENTRY)
+    if again != payload:
+        print("read-back mismatch")
+        return 1
+    print("entry written to %s (%d chars, %d bytes)" % (target, len(LINE), len(payload)))
+    print(LINE)
     return 0
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(run())
